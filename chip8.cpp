@@ -25,6 +25,7 @@ const uint8_t font_data[80] = {
 };
 
 /* hardware */
+bool refresh_screen;
 uint8_t chip8_screen[SCREEN_WIDTH * SCREEN_HEIGHT];
 key_state chip8_key[16]; /* 16 input keys */
 
@@ -37,6 +38,7 @@ uint16_t op, pc, sp, ind; /* 16 bit registers */
 
 inline void clear_screen() {
    memset(chip8_screen, 0, sizeof chip8_screen);
+   refresh_screen = true;
 }
 
 void chip8_init() {
@@ -244,6 +246,7 @@ void chip8_cycle() {
                }
             }
          }
+         refresh_screen = true;
          pc += 2;
          break;
          /* input instructions */
@@ -251,14 +254,14 @@ void chip8_cycle() {
          switch (op & 0x00FF) {
             /* 0xEX9E : skips next instruction if key stored in VX is pressed */
             case 0x009E:
-               if (chip8_key[(op & 0x0F00) >> 8])
+               if (chip8_key[reg[(op & 0x0F00) >> 8]] == KEY_DOWN)
                   pc += 4;
                else
                   pc += 2;
                break;
                /* 0xEXA1 : skips next instruction if key stored in VX isn't pressed */
             case 0x00A1:
-               if (!chip8_key[(op & 0x0F00) >> 8])
+               if (chip8_key[reg[(op & 0x0F00) >> 8]] == KEY_UP)
                   pc += 4;
                else
                   pc += 2;
@@ -345,6 +348,14 @@ void chip8_cycle() {
    }
 }
 
-void chip8_change_key(uint8_t key_code, key_state_t state) {
+bool chip8_refresh_screen() {
+   if (refresh_screen) {
+      refresh_screen = false;
+      return true;
+   }
+   return false;
+}
+
+void chip8_input(uint8_t key_code, key_state_t state) {
    chip8_key[key_code] = state;
 }

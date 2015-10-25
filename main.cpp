@@ -20,7 +20,7 @@ void render();
 SDL_Window *window = NULL;
 SDL_GLContext glContext = NULL;
 GLubyte glBuffer[WIND_HEIGHT][WIND_WIDTH];
-int quit = 0;
+bool quit = false;
 
 int main() {
    init();
@@ -31,7 +31,8 @@ int main() {
 
    do {
       chip8_cycle();
-      render();
+      if (chip8_refresh_screen())
+         render();
       input();
    } while (!quit);
 
@@ -64,11 +65,24 @@ void close() {
    SDL_Quit();
 }
 
+const SDL_Keycode key_map[16] = {
+   SDLK_x, SDLK_1, SDLK_2, SDLK_3, 
+   SDLK_q, SDLK_w, SDLK_e, SDLK_a, 
+   SDLK_s, SDLK_d, SDLK_z, SDLK_c, 
+   SDLK_4, SDLK_r, SDLK_f, SDLK_v 
+};
+
 void input() {
    SDL_Event e;
    while (SDL_PollEvent(&e) != 0){
       if (e.type == SDL_QUIT){
-         quit = 1;
+         quit = true;
+      } else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP){
+         key_state_t ks = (e.type == SDL_KEYDOWN) ? KEY_DOWN : KEY_UP; 
+         for (int i = 0; i < 16; i++){
+            if (e.key.keysym.sym == key_map[i])
+               chip8_input(i, ks);
+         }
       }
    }
 }

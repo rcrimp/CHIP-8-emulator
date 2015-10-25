@@ -14,6 +14,7 @@ extern key_state chip8_key[16];
 extern void chip8_init();
 extern bool chip8_load_rom(const char* filename);
 extern void chip8_cycle();
-extern void chip8_change_key(uint8_t key_code, key_state_t state);
+extern void chip8_input(uint8_t key_code, key_state_t state);
+extern bool chip8_refresh_screen();
 
 #endif
