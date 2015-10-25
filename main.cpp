@@ -10,6 +10,7 @@
 
 #define WIND_WIDTH 640 
 #define WIND_HEIGHT 320 
+const unsigned int clock_rate = 480;
 
 void init();
 void initGL();
@@ -22,18 +23,35 @@ SDL_GLContext glContext = NULL;
 GLubyte glBuffer[WIND_HEIGHT][WIND_WIDTH];
 bool quit = false;
 
-int main() {
-   init();
+int main(int argc, char* argv[]) {
+   clock_t t;
+   clock_t delta = CLOCKS_PER_SEC / clock_rate;
 
+   /* accept a file name as an argument */
+   char *file = (char*)"roms/Pong [Paul Vervalin, 1990].ch8";
+   if (argc == 2)
+      file = argv[1];
+
+   /* initialise the emulator */
    chip8_init();
-   if(!chip8_load_rom("roms/Pong [Paul Vervalin, 1990].ch8"))
+
+   /* load a rom into memory */
+   if(!chip8_load_rom(file))
       goto done;
 
+   /* setup SDL and GL */
+   init();
+
+   /* main event loop */
+   t = clock();
    do {
-      chip8_cycle();
-      if (chip8_refresh_screen())
-         render();
-      input();
+      if (clock() > t){
+         chip8_cycle();
+         if (chip8_refresh_screen())
+            render();
+         input();
+         t += delta;
+      }
    } while (!quit);
 
 done:
@@ -41,6 +59,7 @@ done:
    return 0;
 }
 
+/* initialise SDL */
 void init() {
    srand(time(NULL));
    SDL_Init(SDL_INIT_VIDEO);
@@ -51,6 +70,7 @@ void init() {
    initGL();
 }
 
+/* initialise GL */
 void initGL() {
    glContext = SDL_GL_CreateContext(window);
    SDL_GL_SetSwapInterval(0);
@@ -59,12 +79,14 @@ void initGL() {
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
+/* clean up */
 void close() {
    SDL_DestroyWindow(window);
    window = NULL;
    SDL_Quit();
 }
 
+/* keyboard layout for the hex keypad */
 const SDL_Keycode key_map[16] = {
    SDLK_x, SDLK_1, SDLK_2, SDLK_3, 
    SDLK_q, SDLK_w, SDLK_e, SDLK_a, 
@@ -72,6 +94,7 @@ const SDL_Keycode key_map[16] = {
    SDLK_4, SDLK_r, SDLK_f, SDLK_v 
 };
 
+/* pases SDL input to CHIP-8 emu */
 void input() {
    SDL_Event e;
    while (SDL_PollEvent(&e) != 0){
@@ -87,11 +110,14 @@ void input() {
    }
 }
 
+
 void render() {
+   /* copy chip8 screen to gl buffer */
    int col, row, i = 0, scale = 10;
    for (row = 0; row < WIND_HEIGHT; row++){
       for (col = 0; col < WIND_WIDTH; col++){
          glBuffer[WIND_HEIGHT - 1 - row][col] = chip8_screen[i] * 255;
+         /* only progress to the next pixel every 'scale' iterations */
          if (col % scale == 0 && col != 0)
             i++;
       }

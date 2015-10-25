@@ -25,10 +25,11 @@ const uint8_t font_data[80] = {
 };
 
 unsigned long ticks = 0;
-const bool debug = true;
+const bool debug = false;
 
 /* hardware */
 bool refresh_screen;
+bool wait_key;
 uint8_t chip8_screen[SCREEN_WIDTH * SCREEN_HEIGHT];
 key_state chip8_key[16]; /* 16 input keys */
 
@@ -62,11 +63,14 @@ void chip8_init() {
    /* reset hardware */
    memset(chip8_key, 0, sizeof chip8_key);
    clear_screen();
+   wait_key = false;
 }
 
 bool chip8_load_rom(const char* filename) {
    FILE *f = fopen(filename, "rb");
    if (f) {
+      /* copy rom to 0x200 in memory */
+      /* don't copy past 0xFFF */
       size_t n = fread(memory + 0x200, 1, 0xFFF - 0x200, f);
       fclose(f);
       fprintf(stderr, "read file %s\nfile size: %lu bytes\n", filename, n);
@@ -76,6 +80,7 @@ bool chip8_load_rom(const char* filename) {
    return false;
 }
 
+/* print byte in binary, for debugging */
 void print_byte(uint8_t b) {
    for (int i = 7; i >= 0; i--)
       fprintf(stderr, "%c", ((b>>i) & 1) ? '1' : '0');
@@ -85,7 +90,9 @@ void print_byte(uint8_t b) {
 void chip8_cycle() {
    uint8_t vx, vy;
    bool unknown_opcode = false;
-   uint16_t last_op = op;
+   uint16_t last_op;
+  
+   last_op = op;
    op = (memory[pc] << 8) + memory[pc + 1];   
 
    if (debug) {
@@ -254,9 +261,9 @@ void chip8_cycle() {
             uint8_t vy = reg[(op & 0x00F0) >> 4]; 
             uint8_t n = op & 0x000F;
             reg[0xF] = 0;
-            for (uint8_t y = 0; y < n; y++){
+            for (uint8_t y = 0; y < n && (vy + y) < 32; y++){
                uint8_t row = memory[ind + y];
-               for (uint8_t x = 0; x < 8; x++){
+               for (uint8_t x = 0; x < 8 && (vx + x) < 64; x++){
                   if ((row << x) & 0x80){
                      if (chip8_screen[(vy + y) * SCREEN_WIDTH + (vx + x)])
                         reg[0xF] = 1;
@@ -299,6 +306,9 @@ void chip8_cycle() {
                pc += 2;
                break;
                /* FX0A : A key press is awaited, and then stored in VX */
+            case 0x000A:
+               wait_key = true;
+               break;
                /* FX15 : sets the delay timer to VX */
             case 0x0015:
                dt = reg[(op & 0x0F00) >> 8];
@@ -376,5 +386,10 @@ bool chip8_refresh_screen() {
 }
 
 void chip8_input(uint8_t key_code, key_state_t state) {
+   if(wait_key) {
+      reg[(op & 0x0F00) >> 8] = key_code; 
+      pc += 2;
+      wait_key = false;      
+   }
    chip8_key[key_code] = state;
 }
