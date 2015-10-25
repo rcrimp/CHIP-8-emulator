@@ -339,7 +339,8 @@ void chip8_cycle() {
 
    /* update sound timer */
    if (st > 0){
-      fprintf(stderr, "beep\n");
+      putchar('\a');
+      fflush(stdout);
       st--;
    }
 }
