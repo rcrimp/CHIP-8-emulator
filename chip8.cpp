@@ -109,14 +109,14 @@ void chip8_cycle() {
          break;
          /* 0x3XNN : skip next instruction if VX == NN */
       case 0x3000:
-         if (reg[(op & 0x0F00) >> 8] == op & 0x00FF)
+         if (reg[(op & 0x0F00) >> 8] == (op & 0x00FF))
             pc += 4;
          else
             pc += 2; 
          break;
          /* 0x4XNN : skip next instruction if VX != NN */
       case 0x4000:
-         if (reg[(op & 0x0F00) >> 8] != op & 0x00FF)
+         if (reg[(op & 0x0F00) >> 8] != (op & 0x00FF))
             pc += 4;
          else
             pc += 2;
@@ -130,12 +130,12 @@ void chip8_cycle() {
          break;
          /* 0x6XNN : sets VX to NN */
       case 0x6000:
-         reg[(op & 0x0F00) >> 8] = op & 0x00FF;
+         reg[(op & 0x0F00) >> 8] = (op & 0x00FF);
          pc += 2;
          break;
          /* 0x7XNN : adds NN to VX */
       case 0x7000:
-         reg[(op & 0x0F00) >> 8] += op & 0x00FF; 
+         reg[(op & 0x0F00) >> 8] += (op & 0x00FF); 
          pc += 2;
          break;
          /* arithmetic instructions */  
@@ -163,19 +163,14 @@ void chip8_cycle() {
                break;
                /* 0x8XY4 : adds VY to VX. VF is set to 1 when carry, 0 when not */
             case 0x0004:
-               break; 
                /* 0x8XY5 : subtract VY from VX. VF is set to 1 when borrow, 0 when not */
             case 0x0005:
-               break; 
                /* 0x8XY6 : shift VX right 1 bit. VF set to least significant bit of VX */
             case 0x0006:
-               break; 
                /* 0x8XY7: sets VX to VY minus VX. VF is set to 0 when borrow, 1 when not */
             case 0x0007:
-               break; 
                /* 0x8XYE : shift VX left 1 bit. VF set to most significant bit of VX */
             case 0x000E:
-               break; 
             default:
                unknown_opcode = true;
                pc += 2;
