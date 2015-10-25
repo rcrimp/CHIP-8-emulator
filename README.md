@@ -17,7 +17,7 @@ The chip8 hexpad is mapped to a Qwerty keyboard.
 | 7 8 9 E | A S D F |
 | A 0 B F | Z X C V |
 
-//TODO
+## TODO
 * super chip-8 instructions
 * UI 
   * debugging tools
