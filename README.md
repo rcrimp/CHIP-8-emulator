@@ -6,9 +6,17 @@ A simple CHIP-8 emulator with basic functionality.
 
 SDL/GL handles the graphics and keyboard controls.
 
-prints a \a to stdout for audio.
+prints a bell character ('\a') to stdout for audio.
 
-The chip8 hexpad is mapped to a Qwerty keyboard.
+## Usage
+
+Run the emulator from the command line, with the filename of a rom as the first argument.
+
+```
+c8-emu games/pong.ch8
+```
+
+The CHIP-8 hexpad is mapped to a Qwerty keyboard.
 
 | Hexpad  | Qwerty  |
 |---------|---------|
@@ -18,7 +26,7 @@ The chip8 hexpad is mapped to a Qwerty keyboard.
 | A 0 B F | Z X C V |
 
 ## TODO
-* super chip-8 instructions
+* Implement Super CHIP-8 instructions
 * UI 
   * debugging tools
   * file/rom selection

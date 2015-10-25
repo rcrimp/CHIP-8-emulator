@@ -1,4 +1,5 @@
 a.out
+c8-emu
 *.swp
 .*
 !.gitignore
