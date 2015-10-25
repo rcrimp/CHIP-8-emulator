@@ -24,6 +24,9 @@ const uint8_t font_data[80] = {
    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+unsigned long ticks = 0;
+const bool debug = true;
+
 /* hardware */
 bool refresh_screen;
 uint8_t chip8_screen[SCREEN_WIDTH * SCREEN_HEIGHT];
@@ -82,7 +85,23 @@ void print_byte(uint8_t b) {
 void chip8_cycle() {
    uint8_t vx, vy;
    bool unknown_opcode = false;
+   uint16_t last_op = op;
    op = (memory[pc] << 8) + memory[pc + 1];   
+
+   if (debug) {
+      fprintf(stderr, "\n");
+      fprintf(stderr, "ticks:   %lu\n", ticks++);
+      fprintf(stderr, "last op: %X\n", last_op);
+      fprintf(stderr, "next op: %X\n", op);
+      fprintf(stderr, "pc: %X\n", pc);
+      fprintf(stderr, "sp: %X\n", sp);
+      fprintf(stderr, " i: %X\n", ind);
+      fprintf(stderr, "dt: %X\n", dt);
+      fprintf(stderr, "st: %X\n", st);
+      fprintf(stderr, "    r  s\n");
+      for (int i = 0; i <= 0xF; i++)
+         fprintf(stderr, "%2X %2X %2X\n", i, reg[i], stack[i]);
+   }
 
    switch (op & 0xF000) {
       case 0x0000:
@@ -172,19 +191,19 @@ void chip8_cycle() {
                reg[0xF] = (vx > reg[(op & 0x0F00) >> 8]) ? 1 : 0; 
                pc += 2;
                break;
-               /* 0x8XY5 : subtract VY from VX. VF is set to 1 when borrow, 0 when not */
+               /* 0x8XY5 : subtract VY from VX. VF is set to 0 when borrow, 1 when not */
             case 0x0005:
                vx = reg[(op & 0x0F00) >> 8];
                vy = reg[(op & 0x00F0) >> 4];
                reg[(op & 0x0F00) >> 8] = vx - vy;  
-               reg[0xF] = (vx < reg[(op & 0x0F00) >> 8]) ? 1 : 0; 
+               reg[0xF] = (vx > reg[(op & 0x0F00) >> 8]) ? 1 : 0; 
                pc += 2;
                break;
                /* 0x8XY6 : shift VX right 1 bit. VF set to least significant bit of VX */
             case 0x0006:
-               vx = reg[(op & 0x0F00) >> 8];
-               reg[0xF] = vx & 1;
-               reg[(op & 0x0F00) >> 8] = vx >> 1;
+               vy = reg[(op & 0x00F0) >> 4];
+               reg[0xF] = vy & 1;
+               reg[(op & 0x0F00) >> 8] = vy >> 1;
                pc += 2;
                break;
                /* 0x8XY7: sets VX to VY minus VX. VF is set to 0 when borrow, 1 when not */
@@ -197,9 +216,9 @@ void chip8_cycle() {
                break;
                /* 0x8XYE : shift VX left 1 bit. VF set to most significant bit of VX */
             case 0x000E:
-               vx = reg[(op & 0x0F00) >> 8];
-               reg[0xF] = vx & 0x80;
-               reg[(op & 0x0F00) >> 8] = vx << 1;
+               vy = reg[(op & 0x00F0) >> 8];
+               reg[0xF] = vy & 0x80;
+               reg[(op & 0x0F00) >> 8] = vy << 1;
                pc += 2;
                break;
             default:
@@ -312,14 +331,14 @@ void chip8_cycle() {
             case 0x0055:
                vx = (op & 0x0F00) >> 8;
                for (uint8_t i = 0; i <= vx; i++)
-                  memory[ind + i] = reg[i];
+                  memory[ind++] = reg[i];
                pc += 2;
                break;
                /* FX65 : fills v0 to VX with values from memory, starting at index */
             case 0x0065:
                vx = (op & 0x0F00) >> 8;
                for (uint8_t i = 0; i <= vx; i++)
-                  reg[i] = memory[ind + i];
+                  reg[i] = memory[ind++];
                pc += 2;
                break;
             default:
