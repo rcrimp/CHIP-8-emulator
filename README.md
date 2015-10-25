@@ -1,4 +1,4 @@
-CHIP-8 emulator
+# CHIP-8 emulator
 
 ![pong game](http://i.imgur.com/qZHG5eu.png)
 
@@ -18,9 +18,9 @@ The chip8 hexpad is mapped to a Qwerty keyboard.
 | A 0 B F | Z X C V |
 
 //TODO
-super chip-8 instructions
-UI 
-debugging tools
-file/rom selection
-reset
-screen colour selection 
+* super chip-8 instructions
+* UI 
+  * debugging tools
+  * file/rom selection
+  * reset
+  * screen colour selection 
