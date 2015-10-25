@@ -78,6 +78,7 @@ void print_byte(uint8_t b) {
 }
 
 void chip8_cycle() {
+   uint8_t vx, vy;
    bool unknown_opcode = false;
    op = (memory[pc] << 8) + memory[pc + 1];   
 
@@ -163,14 +164,42 @@ void chip8_cycle() {
                break;
                /* 0x8XY4 : adds VY to VX. VF is set to 1 when carry, 0 when not */
             case 0x0004:
+               vx = reg[(op & 0x0F00) >> 8];
+               vy = reg[(op & 0x00F0) >> 4];
+               reg[(op & 0x0F00) >> 8] = vx + vy;  
+               reg[0xF] = (vx > reg[(op & 0x0F00) >> 8]) ? 1 : 0; 
+               pc += 2;
+               break;
                /* 0x8XY5 : subtract VY from VX. VF is set to 1 when borrow, 0 when not */
             case 0x0005:
+               vx = reg[(op & 0x0F00) >> 8];
+               vy = reg[(op & 0x00F0) >> 4];
+               reg[(op & 0x0F00) >> 8] = vx - vy;  
+               reg[0xF] = (vx < reg[(op & 0x0F00) >> 8]) ? 1 : 0; 
+               pc += 2;
+               break;
                /* 0x8XY6 : shift VX right 1 bit. VF set to least significant bit of VX */
             case 0x0006:
+               vx = reg[(op & 0x0F00) >> 8];
+               reg[0xF] = vx & 1;
+               reg[(op & 0x0F00) >> 8] = vx >> 1;
+               pc += 2;
+               break;
                /* 0x8XY7: sets VX to VY minus VX. VF is set to 0 when borrow, 1 when not */
             case 0x0007:
+               vx = reg[(op & 0x0F00) >> 8];
+               vy = reg[(op & 0x00F0) >> 4];
+               reg[(op & 0x0F00) >> 8] = vy - vx;  
+               reg[0xF] = (vy < reg[(op & 0x0F00) >> 8]) ? 1 : 0; 
+               pc += 2;
+               break;
                /* 0x8XYE : shift VX left 1 bit. VF set to most significant bit of VX */
             case 0x000E:
+               vx = reg[(op & 0x0F00) >> 8];
+               reg[0xF] = vx & 0x80;
+               reg[(op & 0x0F00) >> 8] = vx << 1;
+               pc += 2;
+               break;
             default:
                unknown_opcode = true;
                pc += 2;
@@ -265,29 +294,25 @@ void chip8_cycle() {
                break;
                /* FX33 : stores BCD of VX into index, index+1, index+2.*/
             case 0x0033:
-               {
-                  uint8_t vx = reg[(op & 0x0F00) >> 8];
-                  memory[ind] = vx / 100;
-                  memory[ind + 1] = (vx / 10) % 10;
-                  memory[ind + 2] = vx % 10;
-               }
+               vx = reg[(op & 0x0F00) >> 8];
+               memory[ind] = vx / 100;
+               memory[ind + 1] = (vx / 10) % 10;
+               memory[ind + 2] = vx % 10;
+               pc += 2;
+               break;
                /* FX55 : stores v0 to VX in memory, stating at index */
             case 0x0055:
-               {
-                  uint8_t vx = reg[(op & 0x0F00) >> 8];
-                  for (uint8_t i = 0; i <= vx; i++)
-                     memory[ind + i] = reg[i];
-                  pc += 2;
-               }
+               vx = reg[(op & 0x0F00) >> 8];
+               for (uint8_t i = 0; i <= vx; i++)
+                  memory[ind + i] = reg[i];
+               pc += 2;
                break;
                /* FX65 : fills v0 to VX with values from memory, starting at index */
             case 0x0065:
-               {
-                  uint8_t vx = reg[(op & 0x0F00) >> 8];
-                  for (uint8_t i = 0; i <= vx; i++)
-                     reg[i] = memory[ind + i];
-                  pc += 2;
-               }
+               vx = reg[(op & 0x0F00) >> 8];
+               for (uint8_t i = 0; i <= vx; i++)
+                  reg[i] = memory[ind + i];
+               pc += 2;
                break;
             default:
                unknown_opcode = true;
