@@ -302,14 +302,14 @@ void chip8_cycle() {
                break;
                /* FX55 : stores v0 to VX in memory, stating at index */
             case 0x0055:
-               vx = reg[(op & 0x0F00) >> 8];
+               vx = (op & 0x0F00) >> 8;
                for (uint8_t i = 0; i <= vx; i++)
                   memory[ind + i] = reg[i];
                pc += 2;
                break;
                /* FX65 : fills v0 to VX with values from memory, starting at index */
             case 0x0065:
-               vx = reg[(op & 0x0F00) >> 8];
+               vx = (op & 0x0F00) >> 8;
                for (uint8_t i = 0; i <= vx; i++)
                   reg[i] = memory[ind + i];
                pc += 2;
