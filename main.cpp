@@ -19,7 +19,7 @@ void render();
 
 SDL_Window *window = NULL;
 SDL_GLContext glContext = NULL;
-GLubyte glBuffer[WIND_HEIGHT][WIND_WIDTH][3];
+GLubyte glBuffer[WIND_HEIGHT][WIND_WIDTH];
 int quit = 0;
 
 int main() {
@@ -77,14 +77,12 @@ void render() {
    int col, row;
    for (row = 0; row < WIND_HEIGHT; row++){
       for (col = 0; col < WIND_WIDTH; col++){
-         glBuffer[row][col][0] = rand();
-         glBuffer[row][col][1] = rand(); 
-         glBuffer[row][col][2] = rand(); 
+         glBuffer[row][col] = rand();
       }
    }
 
    /* refresh window buffer */
    glClear(GL_COLOR_BUFFER_BIT);
-   glDrawPixels(WIND_WIDTH, WIND_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, glBuffer);
+   glDrawPixels(WIND_WIDTH, WIND_HEIGHT, GL_LUMINANCE, GL_UNSIGNED_BYTE, glBuffer);
    SDL_GL_SwapWindow(window);
 }
