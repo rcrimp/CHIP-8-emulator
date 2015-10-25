@@ -232,10 +232,15 @@ void chip8_cycle() {
             uint8_t vx = reg[(op & 0x0F00) >> 8];
             uint8_t vy = reg[(op & 0x00F0) >> 4]; 
             uint8_t n = op & 0x000F;
+            reg[0xF] = 0;
             for (uint8_t y = 0; y < n; y++){
                uint8_t row = memory[ind + y];
                for (uint8_t x = 0; x < 8; x++){
-                  chip8_screen[(vy + y) * SCREEN_WIDTH + (vx + x)] = (row >> x) & 1; 
+                  if ((row << x) & 0x80){
+                     if (chip8_screen[(vy + y) * SCREEN_WIDTH + (vx + x)])
+                        reg[0xF] = 1;
+                     chip8_screen[(vy + y) * SCREEN_WIDTH + (vx + x)] ^= 1;
+                  }
                }
             }
          }
