@@ -1,4 +1,4 @@
-OBJS = main.cpp
+OBJS = main.cpp chip8.cpp
 CC = g++
 CFLAGS = -W -Wall -ansi -pedantic -g
 LFLAGS = -lSDL2 -lGL

@@ -6,6 +6,8 @@
 #include <time.h>
 #include <stdio.h>
 
+#include "chip8.h"
+
 #define WIND_WIDTH 640 
 #define WIND_HEIGHT 320 
 
@@ -23,11 +25,17 @@ int quit = 0;
 int main() {
    init();
 
+   chip8_init();
+   if(!chip8_load_rom("roms/Pong [Paul Vervalin, 1990].ch8"))
+      goto done;
+
    do {
+      chip8_cycle();
       render();
       input();
    } while (!quit);
 
+done:
    close();
    return 0;
 }
