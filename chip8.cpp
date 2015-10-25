@@ -208,9 +208,9 @@ void chip8_cycle() {
                break;
                /* 0x8XY6 : shift VX right 1 bit. VF set to least significant bit of VX */
             case 0x0006:
-               vy = reg[(op & 0x00F0) >> 4];
-               reg[0xF] = vy & 1;
-               reg[(op & 0x0F00) >> 8] = vy >> 1;
+               vx = reg[(op & 0x0F00) >> 8];
+               reg[0xF] = vx & 1;
+               reg[(op & 0x0F00) >> 8] = vx >> 1;
                pc += 2;
                break;
                /* 0x8XY7: sets VX to VY minus VX. VF is set to 0 when borrow, 1 when not */
@@ -223,9 +223,9 @@ void chip8_cycle() {
                break;
                /* 0x8XYE : shift VX left 1 bit. VF set to most significant bit of VX */
             case 0x000E:
-               vy = reg[(op & 0x00F0) >> 8];
-               reg[0xF] = vy & 0x80;
-               reg[(op & 0x0F00) >> 8] = vy << 1;
+               vx = reg[(op & 0x0F00) >> 8];
+               reg[0xF] = vx & 0x80;
+               reg[(op & 0x0F00) >> 8] = vx << 1;
                pc += 2;
                break;
             default:
