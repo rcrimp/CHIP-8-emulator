@@ -74,10 +74,10 @@ void input() {
 }
 
 void render() {
-   int col, row;
-   for (row = 0; row < WIND_HEIGHT; row++){
-      for (col = 0; col < WIND_WIDTH; col++){
-         glBuffer[row][col] = rand();
+   int col, row, i = 0;
+   for (row = 0; row < SCREEN_HEIGHT; row++){
+      for (col = 0; col < SCREEN_WIDTH; col++){
+         glBuffer[WIND_HEIGHT - 1 - row][col] = chip8_screen[i++] * 255;
       }
    }
 

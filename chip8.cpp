@@ -5,9 +5,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-const uint8_t SCREEN_WIDTH = 64;
-const uint8_t SCREEN_HEIGHT = 32;
-
 const uint8_t font_data[80] = {
    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
    0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -27,33 +24,38 @@ const uint8_t font_data[80] = {
    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-/* emulator state */
-uint8_t screen[SCREEN_WIDTH * SCREEN_HEIGHT];
+/* hardware */
+uint8_t chip8_screen[SCREEN_WIDTH * SCREEN_HEIGHT];
+key_state chip8_key[16]; /* 16 input keys */
+
+/* CPU state */
 uint8_t memory[4096]; /* 4KB of memory */
 uint8_t reg[16]; /* 16 8bit registers */
-uint8_t key[16]; /* 16 input keys */
 uint16_t stack[16]; /* stack */
 uint8_t dt, st; /* delay timer, sound timer */
 uint16_t op, pc, sp, ind; /* 16 bit registers */
 
 inline void clear_screen() {
-   memset(screen, 0, sizeof screen);
+   memset(chip8_screen, 0, sizeof chip8_screen);
 }
 
 void chip8_init() {
    srand(time(NULL));
+
+   /* reset CPU state */
    pc = 0x200;
    op = 0;
    sp = 0;
    dt = 0;
    st = 0;
    ind = 0;
-
    memset(memory, 0, sizeof memory);
    memset(reg, 0, sizeof reg);
    memset(stack, 0, sizeof stack);
-   memset(key, 0, sizeof key);
    memcpy(memory, font_data, sizeof font_data);
+
+   /* reset hardware */
+   memset(chip8_key, 0, sizeof chip8_key);
    clear_screen();
 }
 
@@ -202,6 +204,17 @@ void chip8_cycle() {
          break;
          /* DXYN : draw sprite at X, Y with height of N */
       case 0xD000:
+         {
+            uint8_t vx = reg[(op & 0x0F00) >> 8];
+            uint8_t vy = reg[(op & 0x00F0) >> 4]; 
+            uint8_t n = op & 0x000F;
+            for (uint8_t y = 0; y < n; y++){
+               uint8_t row = memory[ind + y];
+               for (uint8_t x = 0; x < 8; x++){
+                  chip8_screen[(vy + y) * SCREEN_WIDTH + (vx + x)] = (row >> x) & 1; 
+               }
+            }
+         }
          pc += 2;
          break;
          /* input instructions */
@@ -209,14 +222,14 @@ void chip8_cycle() {
          switch (op & 0x00FF) {
             /* 0xEX9E : skips next instruction if key stored in VX is pressed */
             case 0x009E:
-               if (key[(op & 0x0F00) >> 8])
+               if (chip8_key[(op & 0x0F00) >> 8])
                   pc += 4;
                else
                   pc += 2;
                break;
-            /* 0xEXA1 : skips next instruction if key stored in VX isn't pressed */
+               /* 0xEXA1 : skips next instruction if key stored in VX isn't pressed */
             case 0x00A1:
-               if (!key[(op & 0x0F00) >> 8])
+               if (!chip8_key[(op & 0x0F00) >> 8])
                   pc += 4;
                else
                   pc += 2;
@@ -234,49 +247,56 @@ void chip8_cycle() {
                reg[(op & 0x0F00) >> 8] = dt;
                pc += 2;
                break;
-            /* FX0A : A key press is awaited, and then stored in VX */
-            /* FX15 : sets the delay timer to VX */
+               /* FX0A : A key press is awaited, and then stored in VX */
+               /* FX15 : sets the delay timer to VX */
             case 0x0015:
                dt = reg[(op & 0x0F00) >> 8];
                pc += 2;
                break;
-            /* FX18 : sets the sound timer to VX */
+               /* FX18 : sets the sound timer to VX */
             case 0x0018:
                st = reg[(op & 0x0F00) >> 8];
                pc += 2;
                break;
-            /* FX1E : adds VX to index */
+               /* FX1E : adds VX to index */
             case 0x001E:
                ind += reg[(op & 0x0F00) >> 8];
                pc += 2;
                break;
-            /* FX29 : sets index to adress of font character VX */
+               /* FX29 : sets index to adress of font character VX */
             case 0x0029:
-              ind = 5 * reg[(op & 0x0F00) >> 8]; 
-              pc += 2;
-              break;
-            /* FX33 : stores BCD of VX into index, index+1, index+2.*/
-            /* FX55 : stores v0 to VX in memory, stating at index */
+               ind = 5 * reg[(op & 0x0F00) >> 8]; 
+               pc += 2;
+               break;
+               /* FX33 : stores BCD of VX into index, index+1, index+2.*/
+            case 0x0033:
+               {
+                  uint8_t vx = reg[(op & 0x0F00) >> 8];
+                  memory[ind] = vx / 100;
+                  memory[ind + 1] = (vx / 10) % 10;
+                  memory[ind + 2] = vx % 10;
+               }
+               /* FX55 : stores v0 to VX in memory, stating at index */
             case 0x0055:
-              {
-                 uint8_t vx = reg[(op & 0x0F00) >> 8];
-                 for (uint8_t i = 0; i <= vx; i++)
-                    memory[ind + i] = reg[i];
-                 pc += 2;
-              }
-              break;
-              /* FX65 : fills v0 to VX with values from memory, starting at index */
+               {
+                  uint8_t vx = reg[(op & 0x0F00) >> 8];
+                  for (uint8_t i = 0; i <= vx; i++)
+                     memory[ind + i] = reg[i];
+                  pc += 2;
+               }
+               break;
+               /* FX65 : fills v0 to VX with values from memory, starting at index */
             case 0x0065:
-              {
-                 uint8_t vx = reg[(op & 0x0F00) >> 8];
-                 for (uint8_t i = 0; i <= vx; i++)
-                    reg[i] = memory[ind + i];
-                 pc += 2;
-              }
-              break;
+               {
+                  uint8_t vx = reg[(op & 0x0F00) >> 8];
+                  for (uint8_t i = 0; i <= vx; i++)
+                     reg[i] = memory[ind + i];
+                  pc += 2;
+               }
+               break;
             default:
-              unknown_opcode = true;
-              pc += 2;
+               unknown_opcode = true;
+               pc += 2;
          }
          break;
       default:
@@ -299,6 +319,6 @@ void chip8_cycle() {
    }
 }
 
-void chip8_key(uint8_t key_code, key_state state) {
-   key[key_code] = state;
+void chip8_change_key(uint8_t key_code, key_state_t state) {
+   chip8_key[key_code] = state;
 }
