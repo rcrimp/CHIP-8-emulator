@@ -9,6 +9,7 @@ SDL/GL handles the graphics and keyboard controls.
 prints a \a to stdout for audio.
 
 The chip8 hexpad is mapped to a Qwerty keyboard.
+
 | Hexpad  | Qwerty  |
 |---------|---------|
 | 1 2 3 C | 1 2 3 4 |
