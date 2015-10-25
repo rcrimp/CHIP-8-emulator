@@ -74,11 +74,16 @@ void input() {
 }
 
 void render() {
-   int col, row, i = 0;
-   for (row = 0; row < SCREEN_HEIGHT; row++){
-      for (col = 0; col < SCREEN_WIDTH; col++){
-         glBuffer[WIND_HEIGHT - 1 - row][col] = chip8_screen[i++] * 255;
+   int col, row, i = 0, scale = 10;
+   for (row = 0; row < WIND_HEIGHT; row++){
+      for (col = 0; col < WIND_WIDTH; col++){
+         glBuffer[WIND_HEIGHT - 1 - row][col] = chip8_screen[i] * 255;
+         if (col % scale == 0 && col != 0)
+            i++;
       }
+      i++;
+      if (row % scale != 0 || row == 0)
+         i -= 64;
    }
 
    /* refresh window buffer */
