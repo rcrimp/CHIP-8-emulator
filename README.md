@@ -6,14 +6,14 @@ A simple CHIP-8 emulator with basic functionality.
 
 SDL/GL handles the graphics and keyboard controls.
 
-prints a bell character ('\a') to stdout for audio.
+For audio it plays the OS alert sound, this will be replaced with something more portable later.
 
 ## Usage
 
 Run the emulator from the command line, with the filename of a rom as the first argument.
 
 ```
-c8-emu games/pong.ch8
+./c8-emu games/pong.ch8
 ```
 
 The CHIP-8 hexpad is mapped to a Qwerty keyboard.
